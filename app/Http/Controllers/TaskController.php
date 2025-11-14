@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\task;
+use App\Models\Task;
 use App\Notifications\notificaitonTask;
 use App\Notifications\notificationTask;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 
 class TaskController extends Controller 
@@ -18,7 +19,7 @@ class TaskController extends Controller
     // $listTasks=task::all();
     // }
     // return  view("tasks.index",compact('listTasks'));
-    $listTasks=task::all();
+    $listTasks=Task::all();
     $this->notification();
     return  view("tasks.index",compact('listTasks'));
     }
@@ -57,7 +58,7 @@ class TaskController extends Controller
         return back()->with('error', 'Une erreur est survenue lors de l’ajout.');
     }
     public function edit($id){
-        $taskMod=task::find($id);
+        $taskMod=Task::find($id);
         //dd($taskMod);
         return view('tasks.edit',compact('taskMod'));
     }
@@ -89,7 +90,7 @@ class TaskController extends Controller
     }
     public function destroy($id){
     if(isset($id)){
-    task::destroy($id);
+    Task::destroy($id);
     return back()->with('succee','task delete !!');
       }else{
     return back()->with('error','id not found !!');
@@ -116,20 +117,13 @@ class TaskController extends Controller
     return redirect()->route('taskpending')->with('success', 'Statut mis à jour avec succès ✅');
 }
 
-   public function notification(){
-    $taskPendingNotifiy=DB::table("tasks")->where('user_id',auth()->user()->id)
-    ->where('status','=','pending')->get();
-    //dd($taskPendingNotifiy);
-    $user=auth()->user();
-    //dd($user);
-    if($taskPendingNotifiy){
-    Notification::Route('mail',$user->email)->notify(new notificationTask($user,$taskPendingNotifiy));
-    return ('notification par emails envoyer avec succee !!!');    
-}
-    //Notification::send($user,new notificationTask($user));
-    //$user->notify(new notificationTask($user));
-    
-
+   public static function notification(){
+        $user = auth()->user();
+        $taskPendingNotifiy = Task::where('user_id', $user->id)->where('status','pending')->count();
+        if($taskPendingNotifiy > 0){
+            Notification::Route('mail',$user->email)->notify(new notificationTask($user,$taskPendingNotifiy));
+            return ('notification par emails envoyer avec succee !!!');    
+        }
    }
 
 }

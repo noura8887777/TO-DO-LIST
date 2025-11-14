@@ -28,6 +28,9 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
+        
+        // notify user for pending tasks after login
+        \App\Http\Controllers\TaskController::notification();
 
         return redirect()->intended(RouteServiceProvider::HOME);
     }
